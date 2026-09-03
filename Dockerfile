@@ -8,9 +8,11 @@
 #      then dropping to the factorio user is the proven pattern)
 #   3. Layer in a Railway-aware entrypoint that verifies the volume
 #      before exec'ing the upstream binary
-#   4. Add a tiny HTTP health server on Railway's injected PORT so
+#   4. Add a tiny TCP health server on Railway's injected PORT so
 #      Railway's HTTP-only healthcheck sees a 200 (the UDP game port
-#      can't satisfy an HTTP probe).
+#      can't satisfy an HTTP probe). UDP/TCP share the same port
+#      number on the same address, so the game and the healthcheck
+#      listener coexist on whatever PORT Railway injects.
 FROM factoriotools/factorio:2.0.77
 
 USER root
@@ -31,13 +33,15 @@ COPY entrypoint.sh /usr/local/bin/railway-entrypoint.sh
 COPY health.sh /usr/local/bin/railway-health.sh
 RUN chmod +x /usr/local/bin/railway-entrypoint.sh /usr/local/bin/railway-health.sh
 
-# Factorio's default ports:
-#   34197/udp — game traffic (players connect here)
-#   27015/tcp — RCON (admin console)
-# 8080/tcp   — Railway HTTP healthcheck (responded to by railway-health.sh)
-EXPOSE 34197/udp
-EXPOSE 27015/tcp
+# Factorio's ports (read by the upstream entrypoint from $PORT and $RCON_PORT):
+#   $PORT/udp     — game traffic (players connect here)
+#   $RCON_PORT/tcp — RCON admin
+#   $PORT/tcp     — Railway HTTP healthcheck (responded to by railway-health.sh)
+#   Because Railway injects $PORT (default 8080), all three protocols
+#   share 8080: UDP for the game, TCP for the healthcheck.
+EXPOSE 8080/udp
 EXPOSE 8080/tcp
+EXPOSE 27015/tcp
 
 # Docker-level healthcheck probes the RCON port. The Railway-level
 # healthcheck (configured separately) hits the HTTP 8080 endpoint

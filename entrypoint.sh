@@ -24,13 +24,21 @@ echo "[factorio-railway] starting"
 echo "[factorio-railway] image: factoriotools/factorio:2.0.77"
 echo "[factorio-railway] uid=$(id -u) gid=$(id -g) factorio_uid=845"
 
-# Start the HTTP health server on 8080 in the background. It just
-# returns 200 OK so the healthcheck is happy. Listens on 8080 (not
-# on Railway's injected PORT, which we override to 34197 so Factorio
-# binds to the standard game port). Uses socat (added in Dockerfile).
+# Start the HTTP health server in the background. It listens on
+# TCP 8080 (the default Railway-injected PORT) and serves a 200 OK
+# for every connection so Railway's HTTP-only healthcheck passes.
+# The Factorio server itself binds UDP 8080 (driven by $PORT passed
+# through to the upstream entrypoint) — UDP and TCP can share a port
+# number on the same address, so the game and the healthcheck
+# listener coexist on 8080.
+# We do NOT override PORT. Setting PORT=34197 (the standard Factorio
+# game port) would silently break the healthcheck because Railway's
+# HTTP proxy targets whatever PORT is set to. With PORT=8080, the
+# proxy hits 8080 and our socat answers 200. Players connect on
+# port 8080/udp (not 34197), which is a known Railway-port quirk.
 nohup /usr/local/bin/railway-health.sh >/tmp/railway-health.log 2>&1 &
 HEALTH_PID=$!
-echo "[factorio-railway] health server pid=${HEALTH_PID} port=8080 (railway-port=${PORT})"
+echo "[factorio-railway] health server pid=${HEALTH_PID} port=${PORT:-8080}"
 
 # Clean up the health server if the upstream entrypoint exits (best effort)
 trap 'kill ${HEALTH_PID} 2>/dev/null || true' EXIT

@@ -18,7 +18,7 @@ Deploy with one click. On first boot the container:
 2. Generates a random **RCON password** and writes it to `/factorio/config/rconpw`.
 3. Copies the default `server-settings.json`, `map-gen-settings.json`, and `map-settings.json` from the image.
 4. Creates a new save if `GENERATE_NEW_SAVE=true` (otherwise loads the most recent save in `/factorio/saves`, or refuses to start if `LOAD_LATEST_SAVE=false`).
-5. Starts the game on UDP 34197 (game traffic) and TCP 27015 (RCON admin).
+5. Starts the game on UDP 8080 (game traffic) and TCP 27015 (RCON admin). UDP 8080 is shared with the HTTP health server (socat listens on TCP 8080 — the two protocols coexist because they don't collide).
 
 Players connect from Factorio's **Multiplayer → Connect to address** screen
 using your Railway service's public address. The RCON port lets you run admin
@@ -28,7 +28,7 @@ commands from any RCON client (e.g. [rcon-cli](https://github.com/gorcon/rcon-cl
 
 - **Single service**, official `factoriotools/factorio:2.0.77` image — no source build, 132 MB cold start plus ~700 KB for `socat` (used for the HTTP health server).
 - **Persistent Railway volume** at `/factorio` (saves, mods, config, RCON password, logs).
-- **Game port** UDP 34197 + **RCON port** TCP 27015. UDP 34197 is reachable directly at `<service>.up.railway.app:34197/udp`; RCON is on the same host on TCP 27015 (use the Railway TCP proxy or run `rcon-cli` from a sidecar — see [Connecting](#connecting)).
+- **Game port** UDP 8080 + **RCON port** TCP 27015. UDP 8080 is reachable directly at `<service>.up.railway.app:8080/udp`; RCON is on the same host on TCP 27015 (use the Railway TCP proxy or run `rcon-cli` from a sidecar — see [Connecting](#connecting)).
 - **Default resource**: 1 vCPU / 1 GB RAM. Factorio headless with 8–10 players runs fine in 512 MB; 1 GB is comfortable headroom.
 - **HTTP healthcheck endpoint** at `GET /` (returns `200 ok`) so Railway's HTTP-only healthcheck can verify the container is up. Implemented as a tiny `socat` listener on the Railway-injected `PORT` (default 8080) — see `health.sh`.
 - **Runs as root** so the upstream entrypoint can chown the Railway-managed volume to the `factorio` user, then drops to that user before exec.
@@ -66,7 +66,7 @@ won't overwrite it on subsequent boots.
 Once the service is up:
 
 1. **Get your address** from the Railway service panel (e.g. `factorio-production-xxxx.up.railway.app`).
-2. **In Factorio**, click **Multiplayer → Connect to address** and paste `<your-address>:34197`. Factorio auto-appends `:34197` if you leave it off — make sure the **transport is UDP** (default).
+2. **In Factorio**, click **Multiplayer → Connect to address** and paste `<your-address>:8080`. Factorio auto-appends `:34197` if you leave it off — **edit the port to 8080** before clicking Connect. The transport is UDP (default).
 3. If your `server-settings.json` has a `password` field, enter it when prompted.
 4. **For RCON admin commands**: RCON runs on TCP 27015 inside the container. Railway does **not** auto-proxy arbitrary TCP ports. The simplest access path is to add a **TCP proxy** service to the same project pointing at the Factorio service's RCON port, then point your RCON client (e.g. [rcon-cli](https://github.com/gorcon/rcon-cli)) at the TCP proxy's hostname:port with the password from `/factorio/config/rconpw` (read it from the volume). Alternatively, exec into the running container via the Railway shell and use `nc` locally.
 
