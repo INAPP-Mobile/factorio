@@ -1,6 +1,6 @@
 # Factorio — Headless Server on Railway
 
-[![Deploy to Railway](https://railway.app/button.svg)](https://railway.com/deploy/factorio)
+[![Deploy to Railway](https://railway.app/button.svg)](https://railway.com/deploy/vgous7)
 
 > Factorio is a paid game. Each player who joins your server needs their own
 > Factorio license. This template only runs the headless server binary — players
