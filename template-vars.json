@@ -1,0 +1,26 @@
+{
+  "LOAD_LATEST_SAVE": {
+    "name": "Load Latest Save",
+    "defaultValue": "true",
+    "description": "If true (default), the server loads the most recent save in /factorio/saves. Set to false to require an explicit SAVE_NAME.",
+    "isOptional": true
+  },
+  "SAVE_NAME": {
+    "name": "Save Name",
+    "defaultValue": "",
+    "description": "Specific save to load (without .zip). If empty and LOAD_LATEST_SAVE=true, the most recent save is loaded. If empty and LOAD_LATEST_SAVE=false, the server refuses to start.",
+    "isOptional": true
+  },
+  "GENERATE_NEW_SAVE": {
+    "name": "Generate New Save",
+    "defaultValue": "false",
+    "description": "If true, creates a new save with the name from SAVE_NAME on boot. Requires SAVE_NAME to be set. The new save persists in the volume.",
+    "isOptional": true
+  },
+  "UPDATE_MODS_ON_START": {
+    "name": "Update Mods On Start",
+    "defaultValue": "false",
+    "description": "If true, runs docker-update-mods.sh on every boot to re-download mod versions listed in /factorio/mods/mod-list.json. Set to false to keep mods pinned.",
+    "isOptional": true
+  }
+}
