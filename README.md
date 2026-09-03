@@ -40,6 +40,26 @@ sessions — your conveyor belts keep churning, your trains keep rolling, your
 research queue keeps advancing. Railway's sticky deployment means no surprise
 reboots when traffic is low: the container stays warm and your world stays live.
 
+## Dependencies for factorio
+
+This template is self-contained — no external database or companion service is required.
+
+### Deployment Dependencies
+
+| Dependency | Required | Purpose |
+|---|---|---|
+| `factoriotools/factorio:2.0.77` image | Yes | Official headless server binary |
+| Railway persistent volume at `/factorio` | Yes | Saves, mods, config, RCON password survive redeploys |
+| UDP 8080 | Yes | Game traffic (TCP 8080 on the same number serves the HTTP healthcheck) |
+| TCP 27015 | Optional | RCON admin access (expose via a Railway TCP proxy) |
+
+## Common Use Cases
+
+- **24/7 factory** — the world keeps simulating between sessions: research, trains, and belts keep moving while you're away.
+- **Persistent multiplayer worlds** — saves survive redeploys; friends join at `<address>:8080` from the vanilla client.
+- **Modded servers** — drop mod zips into `/factorio/mods`, optionally auto-update on every boot.
+- **RCON automation** — script whitelists, bans, saves, and chat over TCP 27015.
+
 ## Configuration
 
 Most configuration is via the upstream image's env vars. See `.env.example` for
