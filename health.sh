@@ -4,11 +4,13 @@
 # way to satisfy Railway's healthcheck for a UDP-only game server
 # (Factorio doesn't speak HTTP).
 #
-# Listens on HEALTHCHECK_PORT (default 8080, which is what Railway
-# injects as PORT). Uses socat (installed in the Dockerfile).
+# Listens on 8080 — Railway injects PORT=34197 to make Factorio
+# bind to the standard game port, but the HTTP healthcheck still
+# needs an HTTP endpoint on 8080. 8080 is the conventional Railway
+# HTTP port and is also EXPOSEd in the Dockerfile.
 set -eu
 
-PORT="${HEALTHCHECK_PORT:-${PORT:-8080}}"
+PORT=8080
 
 echo "[factorio-health] listening on TCP ${PORT} for Railway healthchecks"
 

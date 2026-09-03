@@ -24,12 +24,13 @@ echo "[factorio-railway] starting"
 echo "[factorio-railway] image: factoriotools/factorio:2.0.77"
 echo "[factorio-railway] uid=$(id -u) gid=$(id -g) factorio_uid=845"
 
-# Start the HTTP health server on Railway's injected PORT in the
-# background. It just returns 200 OK so the healthcheck is happy.
-# Uses socat (added in Dockerfile) to keep this tiny.
+# Start the HTTP health server on 8080 in the background. It just
+# returns 200 OK so the healthcheck is happy. Listens on 8080 (not
+# on Railway's injected PORT, which we override to 34197 so Factorio
+# binds to the standard game port). Uses socat (added in Dockerfile).
 nohup /usr/local/bin/railway-health.sh >/tmp/railway-health.log 2>&1 &
 HEALTH_PID=$!
-echo "[factorio-railway] health server pid=${HEALTH_PID} port=${HEALTHCHECK_PORT:-${PORT:-8080}}"
+echo "[factorio-railway] health server pid=${HEALTH_PID} port=8080 (railway-port=${PORT})"
 
 # Clean up the health server if the upstream entrypoint exits (best effort)
 trap 'kill ${HEALTH_PID} 2>/dev/null || true' EXIT
