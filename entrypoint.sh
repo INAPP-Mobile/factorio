@@ -14,12 +14,25 @@
 #      shows the server is initializing correctly.
 #   2. Echo the effective UID so a misconfigured volume mount (where the
 #      upstream chown fails) shows up immediately in logs.
-#   3. Then exec the upstream entrypoint.
+#   3. Start a tiny HTTP health server (railway-health.sh) on Railway's
+#      injected PORT so the HTTP-only healthcheck returns 200. This
+#      runs in the background and serves plain "ok" responses.
+#   4. Then exec the upstream entrypoint.
 set -eu
 
 echo "[factorio-railway] starting"
 echo "[factorio-railway] image: factoriotools/factorio:2.0.77"
 echo "[factorio-railway] uid=$(id -u) gid=$(id -g) factorio_uid=845"
+
+# Start the HTTP health server on Railway's injected PORT in the
+# background. It just returns 200 OK so the healthcheck is happy.
+# Uses socat (added in Dockerfile) to keep this tiny.
+nohup /usr/local/bin/railway-health.sh >/tmp/railway-health.log 2>&1 &
+HEALTH_PID=$!
+echo "[factorio-railway] health server pid=${HEALTH_PID} port=${HEALTHCHECK_PORT:-${PORT:-8080}}"
+
+# Clean up the health server if the upstream entrypoint exits (best effort)
+trap 'kill ${HEALTH_PID} 2>/dev/null || true' EXIT
 
 # The upstream entrypoint is at /docker-entrypoint.sh (not
 # /factorio/...). The upstream Dockerfile does `COPY files/*.sh /`
