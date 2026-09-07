@@ -21,14 +21,17 @@ Deploy with one click. On first boot the container:
 5. Starts the game on UDP 8080 (game traffic) and TCP 27015 (RCON admin). UDP 8080 is shared with the HTTP health server (socat listens on TCP 8080 — the two protocols coexist because they don't collide).
 
 Players connect from Factorio's **Multiplayer → Connect to address** screen
-using your Railway service's public address. The RCON port lets you run admin
-commands from any RCON client (e.g. [rcon-cli](https://github.com/gorcon/rcon-cli)).
+using the **playit.gg allocation address** — see [Connecting](#connecting).
+Railway's public network is TCP/HTTP only, so the UDP game port is exposed
+through the bundled playit.gg tunnel agent, not the Railway domain directly.
+The RCON port lets you run admin commands from any RCON client (e.g.
+[rcon-cli](https://github.com/gorcon/rcon-cli)) over a Railway TCP proxy.
 
 ## About Hosting
 
 - **Single service**, official `factoriotools/factorio:2.0.77` image — no source build, 132 MB cold start plus ~700 KB for `socat` (used for the HTTP health server).
 - **Persistent Railway volume** at `/factorio` (saves, mods, config, RCON password, logs).
-- **Game port** UDP 8080 + **RCON port** TCP 27015. UDP 8080 is reachable directly at `<service>.up.railway.app:8080/udp`; RCON is on the same host on TCP 27015 (use the Railway TCP proxy or run `rcon-cli` from a sidecar — see [Connecting](#connecting)).
+- **Game port** UDP 8080 + **RCON port** TCP 27015. The UDP game port reaches players through the bundled playit.gg tunnel agent (Railway's public network is TCP/HTTP only — see [Connecting](#connecting)); RCON is on the same host on TCP 27015 (use the Railway TCP proxy or run `rcon-cli` from a sidecar — see [Connecting](#connecting)).
 - **Default resource**: 1 vCPU / 1 GB RAM. Factorio headless with 8–10 players runs fine in 512 MB; 1 GB is comfortable headroom.
 - **HTTP healthcheck endpoint** at `GET /` (returns `200 ok`) so Railway's HTTP-only healthcheck can verify the container is up. Implemented as a tiny `socat` listener on the Railway-injected `PORT` (default 8080) — see `health.sh`.
 - **Runs as root** so the upstream entrypoint can chown the Railway-managed volume to the `factorio` user, then drops to that user before exec.
@@ -42,14 +45,13 @@ reboots when traffic is low: the container stays warm and your world stays live.
 
 ## Dependencies for factorio
 
-This template is self-contained — no external database or companion service is required.
-
 ### Deployment Dependencies
 
 | Dependency | Required | Purpose |
 |---|---|---|
 | `factoriotools/factorio:2.0.77` image | Yes | Official headless server binary |
 | Railway persistent volume at `/factorio` | Yes | Saves, mods, config, RCON password survive redeploys |
+| Free [playit.gg](https://playit.gg) account | Yes | UDP game tunnel (Railway's public network is TCP/HTTP only) |
 | UDP 8080 | Yes | Game traffic (TCP 8080 on the same number serves the HTTP healthcheck) |
 | TCP 27015 | Optional | RCON admin access (expose via a Railway TCP proxy) |
 
@@ -83,14 +85,16 @@ won't overwrite it on subsequent boots.
 
 ## Connecting
 
-Once the service is up:
+Once the service is up (and you've set the `playit` agent's `SECRET_KEY`):
 
-1. **Get your address** from the Railway service panel (e.g. `factorio-production-xxxx.up.railway.app`).
-2. **In Factorio**, click **Multiplayer → Connect to address** and paste `<your-address>:8080`. Factorio auto-appends `:34197` if you leave it off — **edit the port to 8080** before clicking Connect. The transport is UDP (default).
-3. If your `server-settings.json` has a `password` field, enter it when prompted.
-4. **For RCON admin commands**: RCON runs on TCP 27015 inside the container. Railway does **not** auto-proxy arbitrary TCP ports. The simplest access path is to add a **TCP proxy** service to the same project pointing at the Factorio service's RCON port, then point your RCON client (e.g. [rcon-cli](https://github.com/gorcon/rcon-cli)) at the TCP proxy's hostname:port with the password from `/factorio/config/rconpw` (read it from the volume). Alternatively, exec into the running container via the Railway shell and use `nc` locally.
+1. **Create a free account** at [playit.gg](https://playit.gg), then Account → Agents → **Add Agent** → copy the secret key.
+2. **In Railway**, open the `playit` service → Variables → paste the key as `SECRET_KEY`.
+3. **In playit.gg** → Tunnels → **Add Tunnel**: type **UDP**, local address `factorio.railway.internal`, local port `8080`. Playit assigns you a public allocation address (e.g. `1.2.3.4:5432`).
+4. **In Factorio**, click **Multiplayer → Connect to address** and paste the playit allocation address. Leave the port as assigned — the tunnel targets the game's UDP 8080 automatically. The transport is UDP (default).
+5. If your `server-settings.json` has a `password` field, enter it when prompted.
+6. **For RCON admin commands**: RCON runs on TCP 27015 inside the container. Railway does **not** auto-proxy arbitrary TCP ports. The simplest access path is to add a **TCP proxy** service to the same project pointing at the Factorio service's RCON port, then point your RCON client (e.g. [rcon-cli](https://github.com/gorcon/rcon-cli)) at the TCP proxy's hostname:port with the password from `/factorio/config/rconpw` (read it from the volume). Alternatively, exec into the running container via the Railway shell and use `nc` locally.
 
-> The Railway HTTP domain (e.g. `https://<service>.up.railway.app/`) returns `200 ok` — that's the healthcheck responder. There's no web UI; the game port is what players connect to.
+> The Railway HTTP domain (e.g. `https://<service>.up.railway.app/`) returns `200 ok` — that's the healthcheck responder. There's no web UI; players connect through the playit allocation, not the Railway domain.
 
 ## Custom Maps / Saves
 

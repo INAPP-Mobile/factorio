@@ -1,0 +1,6 @@
+{
+  "SECRET_KEY": {
+    "value": "",
+    "description": "REQUIRED. Playit.gg agent secret key. Create a free account at playit.gg, then Account → Agents → Add Agent → copy the secret key. After deploy, configure the tunnel in the playit.gg dashboard: type UDP, local address factorio.railway.internal, local port 8080."
+  }
+}
