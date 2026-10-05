@@ -13,7 +13,7 @@
 #      can't satisfy an HTTP probe). UDP/TCP share the same port
 #      number on the same address, so the game and the healthcheck
 #      listener coexist on whatever PORT Railway injects.
-FROM factoriotools/factorio:2.0.77
+FROM factoriotools/factorio:2.1.20
 
 USER root
 
