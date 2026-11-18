@@ -58,7 +58,7 @@ reboots when traffic is low: the container stays warm and your world stays live.
 ## Common Use Cases
 
 - **24/7 factory** — the world keeps simulating between sessions: research, trains, and belts keep moving while you're away.
-- **Persistent multiplayer worlds** — saves survive redeploys; friends join at `<address>:8080` from the vanilla client.
+- **Persistent multiplayer worlds** — saves survive redeploys; friends join at `{address}:8080` from the vanilla client.
 - **Modded servers** — drop mod zips into `/factorio/mods`, optionally auto-update on every boot.
 - **RCON automation** — script whitelists, bans, saves, and chat over TCP 27015.
 
