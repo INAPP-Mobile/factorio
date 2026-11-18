@@ -94,7 +94,7 @@ Once the service is up (and you've set the `playit` agent's `SECRET_KEY`):
 5. If your `server-settings.json` has a `password` field, enter it when prompted.
 6. **For RCON admin commands**: RCON runs on TCP 27015 inside the container. Railway does **not** auto-proxy arbitrary TCP ports. The simplest access path is to add a **TCP proxy** service to the same project pointing at the Factorio service's RCON port, then point your RCON client (e.g. [rcon-cli](https://github.com/gorcon/rcon-cli)) at the TCP proxy's hostname:port with the password from `/factorio/config/rconpw` (read it from the volume). Alternatively, exec into the running container via the Railway shell and use `nc` locally.
 
-> The Railway HTTP domain (e.g. `https://<service>.up.railway.app/`) returns `200 ok` — that's the healthcheck responder. There's no web UI; players connect through the playit allocation, not the Railway domain.
+> The Railway HTTP domain (e.g. `https://{service}.up.railway.app/`) returns `200 ok` — that's the healthcheck responder. There's no web UI; players connect through the playit allocation, not the Railway domain.
 
 ## Custom Maps / Saves
 
@@ -119,8 +119,8 @@ auto-download mod versions on every boot.
 | Read the auto-generated RCON password | `cat /factorio/config/rconpw` via the Railway volume |
 | Change server name | Edit `/factorio/config/server-settings.json` (or rebuild with a baked-in file) |
 | Add a player slot | Edit `max_players` in `server-settings.json` |
-| Whitelist a player | RCON: `/whitelist add <username>` |
-| Ban a player | RCON: `/ban <username>` |
+| Whitelist a player | RCON: `/whitelist add {username}` |
+| Ban a player | RCON: `/ban {username}` |
 | Save the world now | RCON: `/server-save` |
 | Roll back to a previous save | Drop the old `*_x.zip` file into `/factorio/saves` and set `SAVE_NAME` to its base name |
 | Reset the world | `rm /factorio/saves/*.zip`, set `GENERATE_NEW_SAVE=true`, redeploy |
